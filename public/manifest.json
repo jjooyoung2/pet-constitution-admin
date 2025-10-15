@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "반려동물 체질진단",
+  "name": "반려동물 체질 진단 - 온솔 양·한방 동물병원",
+  "description": "반려동물의 체질을 진단하고 맞춤 식단을 받아보세요",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +21,10 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "categories": ["health", "medical", "lifestyle"],
+  "lang": "ko",
+  "dir": "ltr"
 }
