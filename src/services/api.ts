@@ -1,167 +1,138 @@
-const API_BASE_URL = 'https://tbctjhfypfcjextmxaow.supabase.co/functions/v1';
+// API 기본 설정
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://your-supabase-url.supabase.co/rest/v1';
+
+// 공통 API 응답 타입
+interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
 
 // 인증 관련 API
 export const authAPI = {
-  async login(credentials: { email: string; password: string }) {
-    const response = await fetch(`${API_BASE_URL}/auth-login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    });
-    return await response.json();
+  // 로그인
+  async login(credentials: { email: string; password: string }): Promise<ApiResponse<{ token: string; user: any }>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        return { success: false, error: data.message || '로그인에 실패했습니다.' };
+      }
+    } catch (error) {
+      return { success: false, error: '네트워크 오류가 발생했습니다.' };
+    }
   },
 
-  async register(userData: { email: string; password: string; name: string }) {
-    const response = await fetch(`${API_BASE_URL}/auth-register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
-    });
-    return await response.json();
+  // 회원가입
+  async register(userData: { email: string; password: string; name: string }): Promise<ApiResponse<{ token: string; user: any }>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        return { success: false, error: data.message || '회원가입에 실패했습니다.' };
+      }
+    } catch (error) {
+      return { success: false, error: '네트워크 오류가 발생했습니다.' };
+    }
   },
 
-  async getMe(token: string) {
-    const response = await fetch(`${API_BASE_URL}/auth-me`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    return await response.json();
+  // 사용자 정보 조회
+  async getMe(token: string): Promise<ApiResponse<{ user: any }>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        return { success: false, error: data.message || '사용자 정보를 가져올 수 없습니다.' };
+      }
+    } catch (error) {
+      return { success: false, error: '네트워크 오류가 발생했습니다.' };
+    }
   },
+
 };
 
 // 결과 관련 API
 export const resultsAPI = {
-  async saveResult(resultData: any, token: string) {
-    const response = await fetch(`${API_BASE_URL}/results-save`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
+  // 결과 저장
+  async saveResult(resultData: any, token?: string): Promise<ApiResponse> {
+    try {
+      const headers: any = {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(resultData),
-    });
-    return await response.json();
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/results`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(resultData),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        return { success: false, error: data.message || '결과 저장에 실패했습니다.' };
+      }
+    } catch (error) {
+      return { success: false, error: '네트워크 오류가 발생했습니다.' };
+    }
   },
 
-  async getMyResults(token: string) {
-    const response = await fetch(`${API_BASE_URL}/results-get`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    return await response.json();
-  },
+  // 사용자 결과 조회
+  async getUserResults(token: string): Promise<ApiResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/results/user`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-  async getResultList() {
-    const response = await fetch(`${API_BASE_URL}/results-list`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    return await response.json();
-  },
-
-  async getResult(resultId: string, token: string) {
-    const response = await fetch(`${API_BASE_URL}/results-get`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ resultId }),
-    });
-    return await response.json();
-  },
-
-  async deleteResult(resultId: string, token: string) {
-    const response = await fetch(`${API_BASE_URL}/results-delete`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ resultId }),
-    });
-    return await response.json();
-  },
-};
-
-// 상담 관련 API
-export const consultationAPI = {
-  async createConsultation(consultationData: any, token: string) {
-    const response = await fetch(`${API_BASE_URL}/consultation-save`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(consultationData),
-    });
-    return await response.json();
-  },
-
-  async getMyConsultations(token: string) {
-    const response = await fetch(`${API_BASE_URL}/consultations-get`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    return await response.json();
-  },
-};
-
-// 관리자용 API
-export const adminAPI = {
-  async getAllConsultations() {
-    const response = await fetch(`${API_BASE_URL}/consultations-get`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    return await response.json();
-  },
-
-  async getAllUsers() {
-    const response = await fetch(`${API_BASE_URL}/users-get`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    return await response.json();
-  },
-
-  async getUserDetail(userId: string) {
-    const response = await fetch(`${API_BASE_URL}/users-get/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    return await response.json();
-  },
-
-  async updateConsultationStatus(consultationId: string, status: string) {
-    const response = await fetch(`${API_BASE_URL}/consultations-update/${consultationId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status }),
-    });
-    return await response.json();
-  },
+      const data = await response.json();
+      
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        return { success: false, error: data.message || '결과를 가져올 수 없습니다.' };
+      }
+    } catch (error) {
+      return { success: false, error: '네트워크 오류가 발생했습니다.' };
+    }
+  }
 };

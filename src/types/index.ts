@@ -41,4 +41,4 @@ export interface ApiUser {
   is_admin?: boolean;
 }
 
-export type Step = 'start' | 'basic-info' | 'survey' | 'results' | 'mypage' | 'consultation' | 'admin';
+export type Step = 'start' | 'basic-info' | 'survey' | 'results' | 'mypage' | 'consultation' | 'admin' | 'admin-login' | 'privacy' | 'support';

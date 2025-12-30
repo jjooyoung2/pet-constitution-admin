@@ -7,11 +7,12 @@ interface StartScreenProps {
   onShowLogin: () => void;
   onGoToMyPage: () => void;
   onGoToAdmin: () => void;
+  onGoToPrivacy: () => void;
   isLoggedIn: boolean;
   user: User | null;
 }
 
-const StartScreen: React.FC<StartScreenProps> = ({ onStartAsGuest, onStartSurvey, onShowLogin, onGoToMyPage, onGoToAdmin, isLoggedIn, user }) => {
+const StartScreen: React.FC<StartScreenProps> = ({ onStartAsGuest, onStartSurvey, onShowLogin, onGoToMyPage, onGoToAdmin, onGoToPrivacy, isLoggedIn, user }) => {
   return (
     <div className="start-screen">
       <div className="card">
@@ -31,6 +32,10 @@ const StartScreen: React.FC<StartScreenProps> = ({ onStartAsGuest, onStartSurvey
         
         <div className="privacy-notice">
           <strong>개인정보 수집 안내:</strong> 결과 저장과 상담 연결을 위해 최소 정보만 보관됩니다. 언제든 삭제 가능합니다.
+          <br />
+          <a href="#" onClick={(e) => { e.preventDefault(); onGoToPrivacy(); }} style={{ color: '#667eea', textDecoration: 'underline', marginTop: '8px', display: 'inline-block' }}>
+            개인정보처리방침 보기
+          </a>
         </div>
         
                     <div className="button-group">

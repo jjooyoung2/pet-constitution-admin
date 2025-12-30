@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import { createClient } from '@supabase/supabase-js';
+import './components/AdminPage.css';
 
 // 컴포넌트 import
 import StartScreen from './components/StartScreen';
@@ -11,6 +13,8 @@ import AdminLoginModal from './components/AdminLoginModal';
 import MyPage from './components/MyPage';
 import ConsultationForm from './components/ConsultationForm';
 import AdminPage from './components/AdminPage';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import Support from './components/Support';
 
 // 타입 및 데이터 import
 import { PetInfo, Step, User } from './types';
@@ -20,8 +24,12 @@ import { constitutionData } from './data/constitutionData';
 // API import
 import { authAPI, resultsAPI } from './services/api';
 
+const SUPABASE_URL = 'https://xpeyzdvtzdtzxxsgcsyf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhwZXl6ZHZ0emR0enh4c2djc3lmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MjEzNTQsImV4cCI6MjA4MDQ5NzM1NH0.NfHYC4H9EWbMItKY2Q_GMbRmOHloq4lGi_rpxAKq5zA';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 function App() {
-  const [currentStep, setCurrentStep] = useState<Step>('start');
+  const [currentStep, setCurrentStep] = useState<Step>('admin-login');
   const [petInfo, setPetInfo] = useState<PetInfo>({ name: '', age: '', weight: '', symptoms: '' });
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
@@ -61,27 +69,100 @@ function App() {
     }
   };
 
-  // 앱 시작 시 로그인 상태 확인
+  // 앱 시작 시 로그인 상태 확인 및 URL 경로 체크
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    if (savedToken) {
-      // 토큰이 있으면 사용자 정보 확인
-      authAPI.getMe(savedToken)
-        .then(response => {
-          if (response.success && response.data) {
-        setUser({
-          ...response.data.user,
-          is_admin: (response.data.user as any).is_admin || false
-        });
-            setIsLoggedIn(true);
-            setToken(savedToken);
-          }
-        })
-        .catch(() => {
-          // 토큰이 유효하지 않으면 제거
-          localStorage.removeItem('token');
-        });
+    const path = window.location.pathname;
+    if (path === '/privacy' || path === '/privacy.html') {
+      setCurrentStep('privacy');
+      return;
+    } else if (path === '/support') {
+      setCurrentStep('support');
+      return;
     }
+
+    // 기본 경로는 관리자 로그인/관리자 페이지
+    const checkAuth = async () => {
+      const savedToken = localStorage.getItem('token');
+      if (!savedToken) {
+        setCurrentStep('admin-login');
+        return;
+      }
+
+      try {
+        // 저장된 사용자 정보 확인
+        const savedUserStr = localStorage.getItem('adminUser');
+        if (savedUserStr) {
+          try {
+            const savedUser = JSON.parse(savedUserStr);
+            // admin@onsol.com인지 확인
+            if (savedUser.email === 'admin@onsol.com' && savedUser.is_admin) {
+              setUser(savedUser);
+              setIsLoggedIn(true);
+              setToken(savedToken);
+              setCurrentStep('admin');
+              return;
+            }
+          } catch (e) {
+            // JSON 파싱 실패 시 계속 진행
+          }
+        }
+        
+        // 저장된 사용자 정보가 없거나 유효하지 않으면 Supabase로 확인 시도
+        let user = null;
+        let userError = null;
+        
+        try {
+          const result = await supabase.auth.getUser(savedToken);
+          user = result.data.user;
+          userError = result.error;
+        } catch (err) {
+          userError = err;
+        }
+        
+        // 토큰 검증 실패 시 로그인 페이지로
+        if (userError || !user) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('adminUser');
+          setCurrentStep('admin-login');
+          return;
+        }
+        
+        // 정상적인 토큰인 경우 관리자 확인
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('is_admin, name')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError || !profile?.is_admin || user.email !== 'admin@onsol.com') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('adminUser');
+          setCurrentStep('admin-login');
+          return;
+        }
+
+        // 사용자 정보 저장
+        const userInfo = {
+          id: parseInt(user.id),
+          email: user.email || '',
+          name: profile?.name || user.user_metadata?.name || null,
+          is_admin: true
+        };
+        localStorage.setItem('adminUser', JSON.stringify(userInfo));
+        
+        setUser(userInfo);
+        setIsLoggedIn(true);
+        setToken(savedToken);
+        setCurrentStep('admin');
+      } catch (error) {
+        console.error('Auth check error:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminUser');
+        setCurrentStep('admin-login');
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const startAsGuest = () => {
@@ -414,33 +495,62 @@ function App() {
     setCurrentStep('admin');
   };
 
+  const goToPrivacy = () => {
+    setCurrentStep('privacy');
+  };
+
   const handleAdminLogin = async (email: string, password: string) => {
     try {
-      const response = await authAPI.login({ email, password });
-      
-      if (response.success && response.data) {
-        const { token: newToken, user: userData } = response.data;
-        
-        // 관리자 권한 확인
-        if (!(userData as any).is_admin) {
-          alert('관리자 권한이 필요합니다.');
-          return;
-        }
-        
-        // 토큰과 사용자 정보 저장
-        localStorage.setItem('token', newToken);
-        setToken(newToken);
-        setUser({
-          ...userData,
-          is_admin: (userData as any).is_admin || false
-        });
-        setIsLoggedIn(true);
-        setShowAdminLogin(false);
-        
-        // 관리자 페이지로 이동
-        setCurrentStep('admin');
-        alert('관리자로 로그인되었습니다.');
+      // admin@onsol.com만 허용
+      if (email !== 'admin@onsol.com') {
+        alert('관리자 계정만 로그인할 수 있습니다.');
+        return;
       }
+
+      // 관리자 로그인 전용 Supabase Edge Function 사용
+      const SUPABASE_FUNCTIONS_URL = 'https://xpeyzdvtzdtzxxsgcsyf.supabase.co/functions/v1';
+      const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/admin-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success || !result.data) {
+        alert(`로그인 실패: ${result.message || '알 수 없는 오류가 발생했습니다.'}`);
+        return;
+      }
+
+      const { token, user: userData } = result.data;
+
+      // 관리자 권한 확인
+      if (!userData?.is_admin) {
+        alert('관리자 권한이 필요합니다.');
+        return;
+      }
+
+      // 토큰과 사용자 정보 저장
+      localStorage.setItem('token', token);
+      localStorage.setItem('adminUser', JSON.stringify({
+        id: userData.id,
+        email: userData.email || '',
+        name: userData.name || null,
+        is_admin: true
+      }));
+      setToken(token);
+      setUser({
+        id: userData.id,
+        email: userData.email || '',
+        name: userData.name || null,
+        is_admin: true
+      });
+      setIsLoggedIn(true);
+      
+      // 관리자 페이지로 이동
+      setCurrentStep('admin');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.';
       alert(`로그인 실패: ${errorMessage}`);
@@ -460,12 +570,14 @@ function App() {
     setCurrentStep('results');
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem('token');
+    localStorage.removeItem('adminUser');
     setToken(null);
     setUser(null);
     setIsLoggedIn(false);
-    setCurrentStep('start');
+    setCurrentStep('admin-login');
   };
 
   const startNewDiagnosis = () => {
@@ -505,6 +617,7 @@ function App() {
             onShowLogin={isLoggedIn ? logout : showLogin}
             onGoToMyPage={goToMyPage}
             onGoToAdmin={goToAdmin}
+            onGoToPrivacy={goToPrivacy}
             isLoggedIn={isLoggedIn}
             user={user}
           />
@@ -596,7 +709,33 @@ function App() {
         );
       
       case 'admin':
+        if (!isLoggedIn || !token) {
+          setCurrentStep('admin-login');
+          return null;
+        }
         return <AdminPage />;
+      
+      case 'admin-login':
+        return (
+          <AdminLoginModal 
+            onLogin={handleAdminLogin}
+            onCancel={() => {}}
+          />
+        );
+      
+      case 'privacy':
+        return (
+          <PrivacyPolicy
+            onBack={() => setCurrentStep('start')}
+          />
+        );
+      
+      case 'support':
+        return (
+          <Support
+            onBack={() => setCurrentStep('start')}
+          />
+        );
       
       default:
         return null;
@@ -616,25 +755,19 @@ function App() {
         />
       )}
 
-      {/* 관리자 로그인 모달 */}
-      {showAdminLogin && (
-        <AdminLoginModal 
-          onLogin={handleAdminLogin}
-          onCancel={handleAdminLoginCancel}
-        />
+      {/* 관리자 페이지에서 로그아웃 버튼 */}
+      {currentStep === 'admin' && isLoggedIn && (
+        <button 
+          className="admin-fab"
+          onClick={logout}
+          title="로그아웃"
+        >
+          Logout
+        </button>
       )}
 
-      {/* 관리자 페이지 버튼 (고정) */}
-      <button 
-        className="admin-fab"
-        onClick={goToAdmin}
-        title="관리자 페이지"
-      >
-        ⚙️
-      </button>
-
-      {/* PWA 설치 프롬프트 */}
-      {showInstallPrompt && (
+      {/* PWA 설치 프롬프트 (개인정보처리방침, 지원 페이지, 관리자 페이지에서는 표시 안 함) */}
+      {showInstallPrompt && currentStep !== 'privacy' && currentStep !== 'support' && currentStep !== 'admin' && currentStep !== 'admin-login' && (
         <div className="install-prompt">
           <div className="install-content">
             <h3>📱 앱으로 설치하세요!</h3>
