@@ -38,6 +38,19 @@ const BasicInfoForm: React.FC<BasicInfoFormProps> = ({
         </div>
         
         <div className="form-group">
+          <label htmlFor="pet-type">구분</label>
+          <select
+            id="pet-type"
+            value={petInfo.petType || ''}
+            onChange={(e) => handleInputChange('petType', e.target.value)}
+          >
+            <option value="">선택하세요</option>
+            <option value="강아지">강아지</option>
+            <option value="고양이">고양이</option>
+          </select>
+        </div>
+        
+        <div className="form-group">
           <label htmlFor="pet-age">나이 (개월)</label>
           <input 
             type="number" 

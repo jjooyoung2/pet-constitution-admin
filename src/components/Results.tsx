@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ConstitutionData } from '../types';
+import { ConstitutionData, PetInfo } from '../types';
 
 interface ResultsProps {
   constitution: string;
@@ -9,6 +9,7 @@ interface ResultsProps {
   onBookConsultation: () => void;
   isFromMyPage?: boolean;
   onBackToMyPage?: () => void;
+  petInfo?: PetInfo;
   petName?: string;
   userEmail?: string;
 }
@@ -21,6 +22,7 @@ const Results: React.FC<ResultsProps> = ({
   onBookConsultation,
   isFromMyPage = false,
   onBackToMyPage,
+  petInfo,
   petName = '반려동물',
   userEmail
 }) => {
@@ -71,6 +73,58 @@ const Results: React.FC<ResultsProps> = ({
   return (
     <div className="results">
       <div className="card">
+        {/* 반려동물 정보 섹션 */}
+        <div className="pet-info-section" style={{
+          background: '#faf8f3',
+          padding: '20px',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          border: '1px solid #e8e3d8'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '15px' }}>
+            <div style={{ flex: '1', minWidth: '200px' }}>
+              {petInfo?.petType && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>구분:</strong> {petInfo.petType}
+                </div>
+              )}
+              <div style={{ marginBottom: '8px' }}>
+                <strong>반려동물 이름:</strong> {petInfo?.name || petName}
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                <strong>체질:</strong> {constitutionData.name}
+              </div>
+              {petInfo?.age && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>나이:</strong> {petInfo.age}개월
+                </div>
+              )}
+              {petInfo?.weight && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>체중:</strong> {petInfo.weight}kg
+                </div>
+              )}
+              {petInfo?.symptoms && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>주요증상:</strong> {petInfo.symptoms}
+                </div>
+              )}
+            </div>
+            <div style={{ color: '#4a5568', fontSize: '14px', textAlign: 'right' }}>
+              {new Date().toLocaleString('ko-KR', {
+                timeZone: 'Asia/Seoul',
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+              })}
+            </div>
+          </div>
+        </div>
+        
         <div className="result-card">
           <div className="constitution-type">체질: {constitutionData.name}</div>
           <div className="constitution-description">{constitutionData.description}</div>

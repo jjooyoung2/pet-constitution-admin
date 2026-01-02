@@ -1,5 +1,6 @@
 export interface PetInfo {
   name: string;
+  petType?: string; // '강아지' | '고양이'
   age: string;
   weight: string;
   symptoms: string;

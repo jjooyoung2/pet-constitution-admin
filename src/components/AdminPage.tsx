@@ -24,6 +24,7 @@ interface UserDetail {
   results: Array<{
     id: number;
     pet_name: string;
+    pet_type?: string;
     pet_age: string;
     pet_weight: string;
     pet_symptoms: string;
@@ -307,7 +308,16 @@ const AdminPage: React.FC = () => {
                 </div>
                 <div className="info-item">
                   <label>가입일:</label>
-                  <span>{new Date(selectedUser.user.created_at).toLocaleString()}</span>
+                  <span>{new Date(selectedUser.user.created_at).toLocaleString('ko-KR', {
+                    timeZone: 'Asia/Seoul',
+                    year: 'numeric',
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                  })}</span>
                 </div>
               </div>
             </div>
@@ -322,13 +332,49 @@ const AdminPage: React.FC = () => {
                     <div key={result.id} className="result-item">
                       <div className="result-header">
                         <h4>{result.pet_name}</h4>
-                        <span className="constitution-badge">{result.constitution}</span>
-                        <span className="date">{new Date(result.created_at).toLocaleString()}</span>
+                        <span className="date">{
+                          (() => {
+                            // created_at이 UTC로 저장되어 있다고 가정하고 한국 시간으로 변환
+                            const dateStr = result.created_at;
+                            // ISO 형식인지 확인하고, 타임존이 없으면 UTC로 간주
+                            let date: Date;
+                            if (dateStr.includes('Z') || dateStr.includes('+') || dateStr.includes('-', 10)) {
+                              // 이미 타임존 정보가 있음
+                              date = new Date(dateStr);
+                            } else {
+                              // 타임존 정보가 없으면 UTC로 간주하고 'Z' 추가
+                              date = new Date(dateStr + (dateStr.includes('T') ? 'Z' : ''));
+                            }
+                            return date.toLocaleString('ko-KR', {
+                              timeZone: 'Asia/Seoul',
+                              year: 'numeric',
+                              month: 'numeric',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                              hour12: true
+                            });
+                          })()
+                        }</span>
                       </div>
                       <div className="result-details">
-                        <p><strong>나이:</strong> {result.pet_age}</p>
-                        <p><strong>체중:</strong> {result.pet_weight}</p>
-                        <p><strong>증상:</strong> {result.pet_symptoms}</p>
+                        <p><strong>구분:</strong> {
+                          result.pet_type === 'dog' ? '강아지' : 
+                          result.pet_type === 'cat' ? '고양이' : 
+                          result.pet_type || '-'
+                        }</p>
+                        <p><strong>반려동물 이름:</strong> {result.pet_name}</p>
+                        <p><strong>체질:</strong> {result.constitution}</p>
+                        {result.pet_age && (
+                          <p><strong>나이:</strong> {result.pet_age}</p>
+                        )}
+                        {result.pet_weight && (
+                          <p><strong>체중:</strong> {result.pet_weight}</p>
+                        )}
+                        {result.pet_symptoms && (
+                          <p><strong>주요증상:</strong> {result.pet_symptoms}</p>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -405,10 +451,24 @@ const AdminPage: React.FC = () => {
                         <h4>{consultation.name}</h4>
                         <span className="phone">{consultation.phone}</span>
                         <span className="date">
-                          희망일: {new Date(consultation.preferred_date).toLocaleDateString()}
+                          희망일: {new Date(consultation.preferred_date).toLocaleDateString('ko-KR', {
+                            timeZone: 'Asia/Seoul',
+                            year: 'numeric',
+                            month: 'numeric',
+                            day: 'numeric'
+                          })}
                         </span>
                         <span className="created">
-                          신청일: {new Date(consultation.created_at).toLocaleString()}
+                          신청일: {new Date(consultation.created_at).toLocaleString('ko-KR', {
+                            timeZone: 'Asia/Seoul',
+                            year: 'numeric',
+                            month: 'numeric',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: true
+                          })}
                         </span>
                       </div>
                       <div className="consultation-status">
@@ -578,7 +638,12 @@ const AdminPage: React.FC = () => {
                         </td>
                         <td>{user.phone || '-'}</td>
                         <td>{user.email}</td>
-                        <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                        <td>{new Date(user.created_at).toLocaleDateString('ko-KR', {
+                          timeZone: 'Asia/Seoul',
+                          year: 'numeric',
+                          month: 'numeric',
+                          day: 'numeric'
+                        })}</td>
                         <td>
                           <button 
                             className="btn btn-primary btn-sm"

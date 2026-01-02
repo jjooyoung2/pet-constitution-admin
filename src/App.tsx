@@ -30,7 +30,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function App() {
   const [currentStep, setCurrentStep] = useState<Step>('admin-login');
-  const [petInfo, setPetInfo] = useState<PetInfo>({ name: '', age: '', weight: '', symptoms: '' });
+  const [petInfo, setPetInfo] = useState<PetInfo>({ name: '', petType: '', age: '', weight: '', symptoms: '' });
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -381,8 +381,14 @@ function App() {
       }
 
       // petInfo가 null이거나 비어있는 경우 기본값 설정
+      // petType을 데이터베이스 형식(dog/cat)으로 변환
+      const petTypeValue = petInfo?.petType === '강아지' ? 'dog' : 
+                           petInfo?.petType === '고양이' ? 'cat' : 
+                           petInfo?.petType || '';
+      
       const safePetInfo = {
         name: (petInfo && petInfo.name) || '이름 없음',
+        petType: petTypeValue,
         age: (petInfo && petInfo.age) || '',
         weight: (petInfo && petInfo.weight) || '',
         symptoms: (petInfo && petInfo.symptoms) || ''
@@ -582,7 +588,7 @@ function App() {
 
   const startNewDiagnosis = () => {
     // 설문 관련 state 초기화
-    setPetInfo({ name: '', age: '', weight: '', symptoms: '' });
+    setPetInfo({ name: '', petType: '', age: '', weight: '', symptoms: '' });
     setCurrentQuestionIndex(0);
     setAnswers([]);
     setSelectedAnswer(null);
@@ -656,6 +662,16 @@ function App() {
           tips: constitutionData[selectedResult.constitution]?.tips || ''
         } : constitutionData[constitution];
         
+        const currentPetInfo = selectedResult ? {
+          name: selectedResult.pet_name || '',
+          petType: selectedResult.pet_type === 'dog' ? '강아지' : 
+                   selectedResult.pet_type === 'cat' ? '고양이' : 
+                   selectedResult.pet_type || '',
+          age: selectedResult.pet_age || '',
+          weight: selectedResult.pet_weight || '',
+          symptoms: selectedResult.pet_symptoms || ''
+        } : petInfo;
+        
         return (
           <Results
             constitution={constitution}
@@ -668,6 +684,7 @@ function App() {
               setSelectedResult(null);
               setCurrentStep('mypage');
             }}
+            petInfo={currentPetInfo}
             petName={selectedResult ? selectedResult.pet_name : petInfo.name}
             userEmail={user?.email}
           />
