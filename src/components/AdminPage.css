@@ -42,6 +42,7 @@
   padding: 20px 30px;
   background: #faf8f3;
   border-bottom: 2px solid #e8e3d8;
+  align-items: center;
 }
 
 .admin-tabs .tab-button {
@@ -70,9 +71,18 @@
 /* Admin Controls */
 .admin-controls {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 20px 30px;
+  background: #faf8f3;
+  border-bottom: 1px solid #e8e3d8;
+}
+
+.search-controls-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
   background: #faf8f3;
   border-bottom: 1px solid #e8e3d8;
 }
@@ -92,6 +102,58 @@
   color: #4a7c59;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   border: 1px solid #e8e3d8;
+}
+
+/* Search Controls */
+.search-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-criteria-select,
+.search-input,
+.sort-select {
+  padding: 8px 12px;
+  border: 1px solid #e8e3d8;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  color: #3a3a3a;
+  font-family: inherit;
+}
+
+.search-criteria-select {
+  min-width: 80px;
+}
+
+.search-input {
+  width: 200px;
+}
+
+.search-input:focus,
+.search-criteria-select:focus,
+.sort-select:focus {
+  outline: none;
+  border-color: #4a7c59;
+  box-shadow: 0 0 0 2px rgba(74, 124, 89, 0.1);
+}
+
+.search-button {
+  padding: 8px 16px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.sort-label {
+  margin-left: 8px;
+  font-size: 14px;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.sort-select {
+  min-width: 100px;
 }
 
 /* Users Table */
@@ -409,4 +471,6 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Email Submissions Table - uses same style as users-table */
 
