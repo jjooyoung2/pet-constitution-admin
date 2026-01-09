@@ -73,6 +73,10 @@ const AdminPage: React.FC = () => {
   const [emailSortOrder, setEmailSortOrder] = useState<'registration' | 'alphabetical'>('registration');
 
   useEffect(() => {
+    document.title = '온솔 반려동물 체질 검사 관리 시스템';
+  }, []);
+
+  useEffect(() => {
     if (activeTab === 'consultations') {
       fetchConsultations();
     } else if (activeTab === 'users') {
@@ -574,7 +578,7 @@ const AdminPage: React.FC = () => {
       <div className="card">
         <div className="header">
           <h2>🏥 관리자 페이지</h2>
-          <p>온솔 양·한방 동물병원 관리 시스템</p>
+          <p>온솔 반려동물 체질 검사 관리 시스템</p>
         </div>
 
         <div className="admin-tabs">
